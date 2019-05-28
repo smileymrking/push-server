@@ -13,6 +13,26 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
+/*Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
+});*/
+
+use GatewayClient\Gateway;
+
+Route::get('/send', function () {
+    Gateway::$registerAddress = '127.0.0.1:12360';
+    Gateway::sendToClient('c0a80a0a07d000000001', json_encode(['data' => 'Hello World!', 'type' => 'message']));
+    // Gateway::sendToAll(json_encode(['data' => 'Hello World!', 'type' => 'message']));
+});
+
+Route::post('/bind', function (\Illuminate\Http\Request $request) {
+    Gateway::$registerAddress = '127.0.0.1:12360';
+
+    $clientId = $request->get('client_id');
+
+    Gateway::bindUid($clientId, 1);
+
+    Gateway::sendToUid(1, json_encode(['data' => 'Bind successful send', 'type' => 'message']));
+
+    return response()->json(['data' => 'Bind successful return', 'type' => 'message'], 200);
 });

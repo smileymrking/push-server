@@ -96,4 +96,51 @@
             </div>
         </div>
     </body>
+    <script src="https://cdn.staticfile.org/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+        /**
+         * 与GatewayWorker建立websocket连接，域名和端口改为你实际的域名端口，
+         * 其中端口为Gateway端口，即start_gateway.php指定的端口。
+         * start_gateway.php 中需要指定websocket协议，像这样
+         * $gateway = new Gateway(websocket://0.0.0.0:7272);
+         */
+        let ws = new WebSocket("ws://workerman.tech:23460");
+        let wsHeart;
+
+        ws.onopen = function(e){
+            console.log(e);
+            console.info("与服务端连接成功。");
+            ws.send('Can bind uid');//相当于发送一个初始化信息
+            console.info("设置向服务端发送心跳包字符串 setInterval(heart,55000)");
+            wsHeart = setInterval(heart,55000);
+        }
+
+        function heart(){
+            ws.send('{"type":"ping"}');
+        }
+
+        //心跳处理
+        //获取会员id
+        ws.onclose = function(e){
+            clearInterval(wsHeart);
+            console.log('关闭心跳检测');
+        }
+
+        // 服务端主动推送消息时会触发这里的onmessage
+        ws.onmessage = function(e){
+            // json数据转换成js对象
+            let data = eval("("+e.data+")");
+            let type = data.type || '';
+            switch (type) {
+                case "init":
+                    $.post(data.bind_url, {client_id: data.client_id}, function(msg){
+                        console.log(msg);
+                    }, 'json');
+                    break;
+                default:
+                    console.log(e.data);
+                    break;
+            }
+        };
+    </script>
 </html>
