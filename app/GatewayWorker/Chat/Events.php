@@ -26,10 +26,11 @@ class Events
     public static function onConnect($client_id)
     {
         $data = [
-            'type' => 'init',
+            'type' => 'connect',
             'client_id' => $client_id,
-            'bind_url' => '//workerman.tech/api/bind',  # 绑定client_id的回调路由
+            'url' => '//workerman.tech/api/bind',  # 绑定client_id的回调路由
         ];
+        // 如果没有uid的时候
         // 向当前client_id发送数据
         Gateway::sendToClient($client_id, json_encode($data));
     }
@@ -42,7 +43,7 @@ class Events
      */
     public static function onMessage($client_id, $message)
     {
-        // 不处理业务
+        // 不处理业务.
     }
 
     /**
@@ -52,12 +53,6 @@ class Events
      */
     public static function onClose($client_id)
     {
-        $data = [
-            'type' => 'close',
-            'message' => "$client_id logout",
-        ];
-
-        // 向所有人发送
-        GateWay::sendToAll(json_encode($data));
+        //
     }
 }

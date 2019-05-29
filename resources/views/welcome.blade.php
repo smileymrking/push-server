@@ -106,24 +106,21 @@
          */
         let ws = new WebSocket("ws://workerman.tech:23460");
         let wsHeart;
-
         ws.onopen = function(e){
-            console.log(e);
             console.info("与服务端连接成功。");
-            ws.send('Can bind uid');//相当于发送一个初始化信息
             console.info("设置向服务端发送心跳包字符串 setInterval(heart,55000)");
-            wsHeart = setInterval(heart,55000);
-        }
-
-        function heart(){
-            ws.send('{"type":"ping"}');
+            wsHeart = setInterval(function(){
+                ws.send('{"type":"ping"}');
+            },55000);
         }
 
         //心跳处理
         //获取会员id
         ws.onclose = function(e){
-            clearInterval(wsHeart);
-            console.log('关闭心跳检测');
+            if (typeof wsHeart != "undefined") {
+                clearInterval(wsHeart);
+                console.log('关闭心跳检测');
+            }
         }
 
         // 服务端主动推送消息时会触发这里的onmessage
@@ -131,16 +128,32 @@
             // json数据转换成js对象
             let data = eval("("+e.data+")");
             let type = data.type || '';
-            switch (type) {
-                case "init":
-                    $.post(data.bind_url, {client_id: data.client_id}, function(msg){
-                        console.log(msg);
-                    }, 'json');
-                    break;
-                default:
-                    console.log(e.data);
-                    break;
+            let name = 'Stock' + type.substr(0,1).toUpperCase() + type.substr(1);
+            if (typeof window[name] === "function") {
+                new window[name](data);
+            }else {
+                console.log(data);
             }
         };
+    </script>
+    <script>
+        function StockConnect (data){
+            // 可以放到服务器的onConnect事件中操作，避免client_id泄露
+            $.post(data.url, {client_id: data.client_id}, function(msg){
+                console.log(msg);
+            }, 'json');
+        }
+    </script>
+    <script>
+        function StockMessage (data){
+            this._init_(data);
+        }
+
+        StockMessage.prototype = {
+            constructor : StockMessage,
+            _init_ : function(data) {
+                console.log(data);
+            }
+        }
     </script>
 </html>
