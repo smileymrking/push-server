@@ -3,11 +3,7 @@
 namespace App\Console\Commands;
 
 use App\GatewayWorker\Applications;
-use GatewayWorker\BusinessWorker;
-use GatewayWorker\Gateway;
-use GatewayWorker\Register;
 use Illuminate\Console\Command;
-use Workerman\Worker;
 
 class GatewayWorkerServer extends Command
 {
@@ -16,7 +12,7 @@ class GatewayWorkerServer extends Command
      *
      * @var string
      */
-    protected $signature = 'gateway-worker:server {action} {--daemon}';
+    protected $signature = 'gateway-worker {server} {action} {--d}';
 
     /**
      * The console command description.
@@ -37,26 +33,36 @@ class GatewayWorkerServer extends Command
 
     /**
      * Execute the console command.
+     * @throws \ReflectionException
      *
      * @return mixed
      */
     public function handle()
     {
-        global $argv;
-
         if (in_array($action = $this->argument('action'), ['status', 'start', 'stop', 'restart', 'reload', 'connections'])) {
 
-            $argv[0] = 'gateway-worker:server';
-            $argv[1] = $action;
-            $argv[2] = $this->option('daemon') ? '-d' : '';
+            $server = $this->argument('server');
+            $daemon = $this->option('d') ? '-d' : '';
 
-            $applications = new Applications();
-            $applications->run();
+            $class = Applications::$applications[$server];
 
-            Worker::runAll();
+            if (empty($class)){
+                $this->error("{$server}'s workerman service doesn't exist");
+            }else{
+                $classInfo = new \ReflectionClass($class);      //所要查询的类名
+                $dir = dirname($classInfo->getFileName());
 
+                $command = 'cd ' . $dir . " && php start.php {$action} {$daemon}";
+                exec($command, $output);
+                collect($output)->each(function ($info) use ($server, $classInfo){
+                    $info = str_replace('php start.php', "php artisan gateway-worker {$server}", $info);
+                    $info = str_replace('start.php', $classInfo->getShortName(), $info);
+                    $this->line($info);
+                });
+            }
+
+        }else{
+            $this->error('Error Arguments');
         }
-
-        $this->error('Error Arguments');
     }
 }

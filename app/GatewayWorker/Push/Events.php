@@ -1,5 +1,5 @@
 <?php
-namespace App\GatewayWorker\Chat;
+namespace App\GatewayWorker\Push;
 
 use App\GatewayWorker\BaseEvents;
 

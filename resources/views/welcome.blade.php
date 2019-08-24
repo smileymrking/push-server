@@ -98,50 +98,103 @@
     </body>
     <script src="https://cdn.staticfile.org/jquery/3.4.1/jquery.min.js"></script>
     <script>
-        /**
-         * 与GatewayWorker建立websocket连接，域名和端口改为你实际的域名端口，
-         * 其中端口为Gateway端口，即start_gateway.php指定的端口。
-         * start_gateway.php 中需要指定websocket协议，像这样
-         * $gateway = new Gateway(websocket://0.0.0.0:7272);
-         */
-        let ws = new WebSocket("ws://workerman.tech:23460");
-        let wsHeart;
-        ws.onopen = function(e){
-            console.info("与服务端连接成功。");
-            console.info("设置向服务端发送心跳包字符串 setInterval(heart,55000)");
-            wsHeart = setInterval(function(){
-                ws.send('{"type":"ping"}');
-            },55000);
-        }
+        function createWebSocket() {
+            let _this = this
+            this.connect = function () {
+                _this.ws = new WebSocket("ws://push.workerman.tech:23460");
+                _this.ws.onopen = function(e){
+                    console.info("与服务端连接成功。");
+                    console.info("设置向服务端发送心跳包字符串 setInterval(heart,55000)");
+                    _this.heartCheck.start()
+                    _this.reConnect.reset()
+                }
 
-        //心跳处理
-        //获取会员id
-        ws.onclose = function(e){
-            if (typeof wsHeart != "undefined") {
-                clearInterval(wsHeart);
-                console.log('关闭心跳检测');
-            }
-        }
+                //心跳处理
+                //获取会员id
+                _this.ws.onclose = function(e){
+                    _this.ws = null
+                    _this.heartCheck.reset()
+                    _this.reConnect.start()
+                    console.log('关闭心跳检测');
+                }
 
-        // 服务端主动推送消息时会触发这里的onmessage
-        ws.onmessage = function(e){
-            // json数据转换成js对象
-            let data = eval("("+e.data+")");
-            let type = data.type || '';
-            let name = 'Stock' + type.substr(0,1).toUpperCase() + type.substr(1);
-            if (typeof window[name] === "function") {
-                new window[name](data);
-            }else {
-                console.log(data);
+                // 服务端主动推送消息时会触发这里的onmessage
+                _this.ws.onmessage = function(e){
+                    // json数据转换成js对象
+                    console.log(e)
+                    let data = eval("("+e.data+")");
+                    let type = data.type || '';
+                    let name = 'Stock' + type.substr(0,1).toUpperCase() + type.substr(1);
+                    if (typeof window[name] === "function") {
+                        new window[name](data);
+                    }else {
+                        console.log(data);
+                    }
+                }
+
+                _this.ws.onerror = function (event) {
+                    console.log(event)
+                };
             }
-        };
+
+            //心跳检测
+            this.heartCheck = {
+                timeout:1000,//55秒
+                timeoutObj: null,
+                reset: function () {
+                    if (this.timeoutObj !== null) {
+                        clearTimeout(this.timeoutObj)
+                        this.timeoutObj = null
+                    }
+                },
+                heart: function () {
+                    let self = this
+                    this.timeoutObj = setTimeout(function () {
+                        _this.ws.send('{"type":"ping"}')
+                        this.timeoutObj = setTimeout(self.heart(), this.timeout)
+                    }, this.timeout)
+                },
+                start: function () {
+                    if (this.timeoutObj === null) {
+                        _this.heart()
+                    }
+                }
+            }
+
+            //断线重连
+            this.reConnect = {
+                timeout:1000,//55秒
+                timeoutObj: null,
+                reset: function () {
+                    if (this.timeoutObj !== null) {
+                        clearTimeout(this.timeoutObj)
+                        this.timeoutObj = null
+                    }
+                },
+                reCon: function () {
+                    let self = this
+                    this.timeoutObj = setTimeout(function () {
+                        _this.connect()
+                        this.timeoutObj = setTimeout(self.reCon(), this.timeout)
+                    }, this.timeout)
+                },
+                start: function () {
+                    if (this.timeoutObj === null) {
+                        this.reCon()
+                    }
+                }
+            }
+
+            this.connect();
+        }
+    </script>
+    <script>
+        let  ws = new createWebSocket();
     </script>
     <script>
         function StockConnect (data){
             // 可以放到服务器的onConnect事件中操作，避免client_id泄露
-            $.post(data.url, {client_id: data.client_id}, function(msg){
-                console.log(msg);
-            }, 'json');
+            console.log(data);
         }
     </script>
     <script>

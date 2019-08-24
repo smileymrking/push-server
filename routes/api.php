@@ -19,9 +19,9 @@ use Illuminate\Http\Request;
 
 use GatewayClient\Gateway;
 
-Route::get('/send', function () {
+Route::get('/send', function (Request $request) {
     Gateway::$registerAddress = '127.0.0.1:12360';
-    Gateway::sendToClient('c0a80a0a07d000000001', json_encode(['data' => 'Hello World!', 'type' => 'message']));
+    Gateway::sendToClient($request->get('client_id'), json_encode(['data' => 'Hello World!', 'type' => 'message']));
     // Gateway::sendToAll(json_encode(['data' => 'Hello World!', 'type' => 'message']));
 });
 
