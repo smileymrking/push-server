@@ -30,7 +30,7 @@ class Push implements GatewayWorkerInterface
         $gateway = new Gateway("websocket://0.0.0.0:30000");  #连接服务的端口
         $gateway->name                 = 'PushGateway';                     #设置Gateway进程的名称，方便status命令中查看统计
         $gateway->count                = 1;                                 #进程的数量
-        $gateway->lanIp                = '192.168.10.10';                   #内网ip,多服务器分布式部署的时候需要填写真实的内网ip
+        $gateway->lanIp                = config("gateway." . self::NAME . ".business_worker");                   #内网ip,多服务器分布式部署的时候需要填写真实的内网ip
         $gateway->startPort            = 20100;                             #监听本机端口的起始端口
         $gateway->pingInterval         = 55;
         $gateway->pingNotResponseLimit = 1;                                 # 0 服务端主动发送心跳, 1 客户端主动发送心跳

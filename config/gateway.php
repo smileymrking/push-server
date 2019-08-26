@@ -19,6 +19,7 @@ return [
         'gateway' => env('PUSH_GATEWAY', true),
         'business_worker' => env('PUSH_BUSINESS_WORKER', true),
         'register' => env('PUSH_REGISTER', true),
+        'lan_ip' => env('PUSH_LAN_IP', '127.0.0.1'),
     ],
 
 ];
