@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\GatewayWorker\Applications;
 use Illuminate\Console\Command;
 
 class GatewayWorkerServer extends Command
@@ -44,24 +43,24 @@ class GatewayWorkerServer extends Command
             $server = $this->argument('server');
             $daemon = $this->option('d') ? '-d' : '';
 
-            $class = Applications::$applications[$server];
+            $class = config("gateway.{$server}.service");
 
-            if (empty($class)){
+            if (empty($class)) {
                 $this->error("{$server}'s workerman service doesn't exist");
-            }else{
+            } else {
                 $classInfo = new \ReflectionClass($class);      //所要查询的类名
                 $dir = dirname($classInfo->getFileName());
 
                 $command = 'cd ' . $dir . " && php start.php {$action} {$daemon}";
                 exec($command, $output);
-                collect($output)->each(function ($info) use ($server, $classInfo){
+                collect($output)->each(function ($info) use ($server, $classInfo) {
                     $info = str_replace('php start.php', "php artisan gateway-worker {$server}", $info);
                     $info = str_replace('start.php', $classInfo->getShortName(), $info);
                     $this->line($info);
                 });
             }
 
-        }else{
+        } else {
             $this->error('Error Arguments');
         }
     }

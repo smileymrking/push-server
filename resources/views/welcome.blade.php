@@ -98,53 +98,46 @@
     </body>
     <script src="https://cdn.staticfile.org/jquery/3.4.1/jquery.min.js"></script>
     <script>
-        function createWebSocket() {
+        function createWebSocket(url) {
             let _this = this
+            this.ws = null
+            this.connectTimes = 0
             this.connect = function () {
-                _this.ws = new WebSocket("ws://push.workerman.tech:23460");
+                _this.ws = new WebSocket(url);
                 _this.ws.onopen = function(e){
-                    console.info("与服务端连接成功。");
-                    console.info("设置向服务端发送心跳包字符串 setInterval(heart,55000)");
                     _this.heartCheck.start()
                     _this.reConnect.reset()
                 }
 
                 //心跳处理
-                //获取会员id
                 _this.ws.onclose = function(e){
-                    _this.ws = null
                     _this.heartCheck.reset()
                     _this.reConnect.start()
-                    console.log('关闭心跳检测');
                 }
 
                 // 服务端主动推送消息时会触发这里的onmessage
                 _this.ws.onmessage = function(e){
                     // json数据转换成js对象
-                    console.log(e)
-                    let data = eval("("+e.data+")");
-                    let type = data.type || '';
-                    let name = 'Stock' + type.substr(0,1).toUpperCase() + type.substr(1);
+                    let data = eval('(' + e.data + ')')
+                    let type = data.type || ''
+                    let name = 'Stock' + type.substr(0,1).toUpperCase() + type.substr(1)
                     if (typeof window[name] === "function") {
-                        new window[name](data);
+                        new window[name](data)
                     }else {
-                        console.log(data);
+                        console.log(data)
                     }
                 }
-
-                _this.ws.onerror = function (event) {
-                    console.log(event)
-                };
             }
 
             //心跳检测
             this.heartCheck = {
-                timeout:1000,//55秒
+                timeout:55000,//55秒
                 timeoutObj: null,
                 reset: function () {
                     if (this.timeoutObj !== null) {
                         clearTimeout(this.timeoutObj)
                         this.timeoutObj = null
+                        console.log('断开连接，关闭心跳检测')
                     }
                 },
                 heart: function () {
@@ -156,14 +149,16 @@
                 },
                 start: function () {
                     if (this.timeoutObj === null) {
-                        _this.heart()
+                        this.heart()
+                        _this.connectTimes++
+                        console.info('与服务端连接成功，开启心跳检测')
                     }
                 }
             }
 
             //断线重连
             this.reConnect = {
-                timeout:1000,//55秒
+                timeout:5000,//55秒
                 timeoutObj: null,
                 reset: function () {
                     if (this.timeoutObj !== null) {
@@ -181,15 +176,19 @@
                 start: function () {
                     if (this.timeoutObj === null) {
                         this.reCon()
+                        if (_this.connectTimes > 0){
+                            console.log('断线重连中···')
+                        } else {
+                            console.log('连接服务器失败，等待重新连接···')
+                        }
                     }
                 }
             }
-
-            this.connect();
+            _this.connect()
         }
     </script>
     <script>
-        let  ws = new createWebSocket();
+        new createWebSocket('ws://push.workerman.tech:30000')
     </script>
     <script>
         function StockConnect (data){

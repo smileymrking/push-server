@@ -5,8 +5,12 @@
  * Date: 2019/8/23
  * Time: 14:37
  */
-use App\GatewayWorker\Push\Push;
 
 require_once __DIR__ . '/../../../vendor/autoload.php';
 
-Push::start();
+$app = require_once __DIR__ . '/../../../bootstrap/app.php';
+
+// 加载配置
+(new \Illuminate\Foundation\Bootstrap\LoadConfiguration)->bootstrap($app);
+
+(new \App\GatewayWorker\Push\Push())->start();
