@@ -100,40 +100,38 @@
     <script>
         function createWebSocket(url) {
             let _this = this
-            this.ws = null
-            this.connectTimes = 0
-            this.connect = function () {
+            _this.socket = null
+            _this.connectTimes = 0
+            _this.actions = {}
+            _this.connect = function () {
 
-                if (_this.ws !== null && _this.ws.readyState !== 3) return
+                if (_this.socket !== null && _this.socket.readyState !== 3) return
 
-                _this.ws = new WebSocket(url);
-                _this.ws.onopen = function(e){
+                _this.socket = new WebSocket(url);
+                _this.socket.onopen = function(e){
                     _this.heartCheck.start()
                     _this.reConnect.reset()
                 }
 
                 //心跳处理
-                _this.ws.onclose = function(e){
+                _this.socket.onclose = function(e){
                     _this.heartCheck.reset()
                     _this.reConnect.start()
                 }
 
                 // 服务端主动推送消息时会触发这里的onmessage
-                _this.ws.onmessage = function(e){
+                _this.socket.onmessage = function(e){
                     // json数据转换成js对象
                     let data = eval('(' + e.data + ')')
                     let type = data.type || ''
-                    let name = 'Stock' + type.substr(0,1).toUpperCase() + type.substr(1)
-                    if (typeof window[name] === "function") {
-                        new window[name](data)
-                    }else {
-                        console.log(data)
-                    }
+                    let action = _this.actions[type]
+                    if (!action) return
+                    action(data, e)
                 }
             }
 
             //心跳检测
-            this.heartCheck = {
+            _this.heartCheck = {
                 timeout:55000,//55秒
                 timeoutObj: null,
                 reset: function () {
@@ -146,7 +144,7 @@
                 heart: function () {
                     let self = this
                     this.timeoutObj = setTimeout(function () {
-                        _this.ws.send('{"type":"ping"}')
+                        _this.socket.send('{"type":"ping"}')
                         this.timeoutObj = setTimeout(self.heart(), this.timeout)
                     }, this.timeout)
                 },
@@ -160,7 +158,7 @@
             }
 
             //断线重连
-            this.reConnect = {
+            _this.reConnect = {
                 timeout:5000,//55秒
                 timeoutObj: null,
                 reset: function () {
@@ -187,28 +185,21 @@
                     }
                 }
             }
+
+            //添加onmessage中各类型消息对应处理的方法
+            _this.addEvent = function (type, callback) {
+                _this.actions[type] = callback
+            }
+
             _this.connect()
         }
     </script>
     <script>
-        new createWebSocket('{{config('gateway.push_server_url')}}')
-    </script>
-    <script>
-        function StockConnect (data){
-            // 可以放到服务器的onConnect事件中操作，避免client_id泄露
-            console.log(data);
+        function callback(data, e){
+            console.log(data, e);
         }
-    </script>
-    <script>
-        function StockMessage (data){
-            this._init_(data);
-        }
-
-        StockMessage.prototype = {
-            constructor : StockMessage,
-            _init_ : function(data) {
-                console.log(data);
-            }
-        }
+        let ws = new createWebSocket('<?php echo e(config('gateway.push_server_url')); ?>')
+        ws.addEvent('connect', callback)
+        ws.addEvent('message', callback)
     </script>
 </html>
