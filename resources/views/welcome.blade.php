@@ -188,7 +188,7 @@
         }
     </script>
     <script>
-        new createWebSocket('ws://push.workerman.tech:30000')
+        new createWebSocket('{{config('gateway.push_server_url')}}')
     </script>
     <script>
         function StockConnect (data){

@@ -14,6 +14,8 @@ return [
     |--------------------------------------------------------------------------
     */
 
+    'push_server_url' => env('PUSH_SERVER_URL',''),
+
     'push' => [
         'service' => \App\GatewayWorker\Push\Push::class,
         'gateway' => env('PUSH_GATEWAY', true),

@@ -29,7 +29,6 @@ class GatewayWorkerEvents
             'type' => 'connect',
             'client_id' => $client_id
         ];
-        // 如果没有uid的时候
         // 向当前client_id发送数据
         Gateway::sendToClient($client_id, json_encode($data));
     }
@@ -42,13 +41,6 @@ class GatewayWorkerEvents
      */
     public static function onMessage($client_id, $message)
     {
-        $data = [
-            'type' => 'connect',
-            'client_id' => $client_id
-        ];
-        // 如果没有uid的时候
-        // 向当前client_id发送数据
-        Gateway::sendToClient($client_id, json_encode($data));
     }
 
     /**
@@ -58,6 +50,5 @@ class GatewayWorkerEvents
      */
     public static function onClose($client_id)
     {
-        //
     }
 }
