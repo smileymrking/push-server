@@ -23,6 +23,7 @@ Route::get('/send', function (Request $request) {
     Gateway::$registerAddress = '127.0.0.1:20000';
     $clientId = $request->get('client_id');
     $message = $request->get('message');
+    $message = is_array($message) ? json_encode($message) : $message;
     Gateway::sendToClient($clientId, $message);
     // Gateway::sendToAll(json_encode(['data' => 'Hello World!', 'type' => 'message']));
 });
