@@ -103,6 +103,9 @@
             this.ws = null
             this.connectTimes = 0
             this.connect = function () {
+
+                if (_this.ws !== null && _this.ws.readyState !== 3) return
+
                 _this.ws = new WebSocket(url);
                 _this.ws.onopen = function(e){
                     _this.heartCheck.start()

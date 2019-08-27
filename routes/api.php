@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
 use GatewayClient\Gateway;
 
 Route::get('/send', function (Request $request) {
-    Gateway::$registerAddress = '127.0.0.1:12360';
+    Gateway::$registerAddress = '127.0.0.1:20000';
     Gateway::sendToClient($request->get('client_id'), json_encode(['data' => 'Hello World!', 'type' => 'message']));
     // Gateway::sendToAll(json_encode(['data' => 'Hello World!', 'type' => 'message']));
 });
